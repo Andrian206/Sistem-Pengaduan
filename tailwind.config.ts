@@ -10,21 +10,24 @@ const config: Config = {
   theme: {
   	extend: {
   		colors: {
-        // --- GOOGLE STITCH PALETTE ---
-  			primary: "#324AA1", // Biru Google
-  			secondary: "#C2E7FF", // Biru Muda Awan
-        accent: "#47D06B", // Hijau Sukses
-  			background: "#F0F4F9", // Abu sangat muda
-        surface: "#FFFFFF", // Putih bersih
-        text: "#1F1F1F", // Hampir hitam
-  			border: "#E0E3E7",
+  			primary: "#2a76fd",
+  			accent: "#7ee2f1",
+  			warning: "#f16504",
+  			success: "#4ade80",
+  			"background-light": "#f8fafc",
+  			"background-dark": "#0f0f23",
+  			background: "#f8fafc",
+  			foreground: "#0f0f23",
+  		},
+  		fontFamily: {
+  			display: ["var(--font-public-sans)", "sans-serif"],
   		},
   		borderRadius: {
-  			lg: "1.5rem", // 24px
-  			md: "1rem",   // 16px
-  			sm: "0.5rem",
-        full: "9999px" // Pill shape
-  		}
+  			DEFAULT: "1rem",
+  			lg: "2rem",
+  			xl: "3rem",
+  			full: "9999px",
+  		},
   	}
   },
   plugins: [require("tailwindcss-animate")],

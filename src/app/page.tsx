@@ -1,129 +1,275 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/utils/supabase";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Search, Plus, Filter } from "lucide-react";
 import Link from "next/link";
 
-export default function GuestHome() {
+export default function LandingPage() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
 
-  // 1. Fetch Data dari Supabase
   useEffect(() => {
     async function fetchData() {
-      // Ambil data tickets, urutkan dari yg terbaru
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("tickets")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (data) setTickets(data);
       setLoading(false);
     }
     fetchData();
   }, []);
 
-  // 2. Filter Logic Sederhana
-  const filteredTickets = tickets.filter((t) =>
-    t.title.toLowerCase().includes(search.toLowerCase())
-  );
+  // Hitung Statistik Realtime
+  const stats = {
+    total: tickets.length,
+    process: tickets.filter((t) => t.status === "PROSES").length,
+    done: tickets.filter((t) => t.status === "SELESAI").length,
+  };
 
   return (
-    <div className="min-h-screen bg-background font-sans text-text pb-20">
-      
-      {/* === HEADER (Google Style) === */}
-      <header className="bg-surface sticky top-0 z-10 px-6 py-4 shadow-sm flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* Logo Sederhana */}
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">L</div>
-          <span className="font-bold text-xl tracking-tight text-primary">LaporAja</span>
-        </div>
-        <div className="flex gap-3">
-          <Link href="/login">
-            <Button variant="outline" className="rounded-full border-primary text-primary hover:bg-secondary">
-              Masuk / Daftar
-            </Button>
-          </Link>
+    <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased min-h-screen">
+      {/* TopNavBar */}
+      <header className="sticky top-0 z-50 w-full bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary flex items-center justify-center rounded-xl text-white">
+              <span className="material-symbols-outlined text-2xl">
+                home_pin
+              </span>
+            </div>
+            <h2 className="text-xl font-black tracking-tight text-primary">
+              SapaIKMP
+            </h2>
+          </div>
+          <nav className="hidden md:flex items-center gap-10">
+            <a
+              href="#"
+              className="text-sm font-semibold hover:text-primary transition-colors"
+            >
+              Tentang
+            </a>
+            <a
+              href="#"
+              className="text-sm font-semibold hover:text-primary transition-colors"
+            >
+              Alur
+            </a>
+            <a
+              href="#"
+              className="text-sm font-semibold hover:text-primary transition-colors"
+            >
+              Kontak
+            </a>
+          </nav>
+          <div className="flex items-center gap-3">
+            <Link href="/login">
+              <button className="px-6 py-2.5 text-sm font-bold border-2 border-primary text-primary rounded-full hover:bg-primary/5 transition-all">
+                Masuk
+              </button>
+            </Link>
+            <Link href="/register">
+              <button className="px-6 py-2.5 text-sm font-bold bg-primary text-white rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all">
+                Daftar Warga
+              </button>
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* === HERO SECTION === */}
-      <main className="max-w-4xl mx-auto px-6 mt-10">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-text">
-            Ada masalah apa hari ini?
+      {/* HeroSection */}
+      <section className="hero-gradient pt-20 pb-24 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-4xl md:text-6xl font-black text-slate-800 dark:text-white leading-[1.1] mb-6">
+            Wujudkan Lingkungan IKMP yang Nyaman & Aman
           </h1>
-          <p className="text-gray-500 mb-8 text-lg">
-            Sampaikan keluhanmu, kami akan menyelesaikannya.
+          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto">
+            Sampaikan aspirasi atau keluhan Anda. Kami dengar, kami tindak
+            lanjuti demi kenyamanan bersama.
           </p>
+          <Link href="/dashboard">
+            <button className="inline-flex items-center gap-3 px-8 py-5 bg-warning text-white text-lg font-bold rounded-full shadow-xl shadow-warning/30 hover:shadow-warning/50 hover:-translate-y-1 transition-all">
+              <span className="material-symbols-outlined">campaign</span>
+              <span>Buat Laporan Baru</span>
+            </button>
+          </Link>
+        </div>
+      </section>
 
-          {/* Search Bar (Pill Shape) */}
-          <div className="relative max-w-lg mx-auto shadow-md rounded-full">
-            <Search className="absolute left-4 top-3.5 text-gray-400 w-5 h-5" />
-            <Input 
-              className="pl-12 h-12 rounded-full border-none bg-surface text-lg focus-visible:ring-2 focus-visible:ring-primary"
-              placeholder="Cari keluhan (misal: AC Panas)..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+      {/* Stats Section */}
+      <section className="max-w-7xl mx-auto px-6 -mt-12 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center text-center">
+            <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-3xl">
+                description
+              </span>
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+              Total Laporan
+            </p>
+            <p className="text-4xl font-black text-slate-900 dark:text-white">
+              {loading ? "..." : stats.total}
+            </p>
+          </div>
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center text-center">
+            <div className="w-14 h-14 bg-warning/10 text-warning rounded-full flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-3xl">
+                pending_actions
+              </span>
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+              Sedang Proses
+            </p>
+            <p className="text-4xl font-black text-slate-900 dark:text-white">
+              {loading ? "..." : stats.process}
+            </p>
+          </div>
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center text-center">
+            <div className="w-14 h-14 bg-success/10 text-success rounded-full flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-3xl">
+                task_alt
+              </span>
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+              Selesai
+            </p>
+            <p className="text-4xl font-black text-slate-900 dark:text-white">
+              {loading ? "..." : stats.done}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Reports Section */}
+      <main className="max-w-7xl mx-auto px-6 pb-24">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <h2 className="text-3xl font-black text-slate-800 dark:text-white">
+            Laporan Terkini
+          </h2>
+          {/* Chips/Filters */}
+          <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+            <button className="flex shrink-0 items-center gap-2 px-5 py-2 rounded-full bg-primary text-white text-sm font-bold">
+              Semua
+              <span className="material-symbols-outlined text-lg">
+                keyboard_arrow_down
+              </span>
+            </button>
+            <button className="flex shrink-0 items-center gap-2 px-5 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-semibold hover:border-primary transition-colors">
+              Terbaru
+              <span className="material-symbols-outlined text-lg">sort</span>
+            </button>
+            <button className="flex shrink-0 items-center gap-2 px-5 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-semibold hover:border-primary transition-colors">
+              Diproses
+            </button>
+            <button className="flex shrink-0 items-center gap-2 px-5 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-semibold hover:border-primary transition-colors">
+              Selesai
+            </button>
           </div>
         </div>
 
-        {/* === GRID STATUS (Pemisah) === */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold">Laporan Terbaru</h2>
-          <Button variant="ghost" className="text-primary hover:bg-secondary rounded-full">
-            <Filter className="w-4 h-4 mr-2" /> Filter
-          </Button>
-        </div>
-
-        {/* === LIST LAPORAN (Card View) === */}
-        {loading ? (
-          <p className="text-center py-10 text-gray-500">Memuat data...</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredTickets.map((ticket) => (
-              <Card key={ticket.id} className="p-5 rounded-lg border-none shadow-sm hover:shadow-md transition-all bg-surface cursor-pointer">
-                <div className="flex justify-between items-start mb-3">
-                  <Badge 
-                    className={`rounded-full px-3 py-1 font-normal ${
-                      ticket.status === 'SELESAI' ? 'bg-accent text-white' : 
-                      ticket.status === 'PROSES' ? 'bg-yellow-400 text-black' : 
-                      'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        {/* Reports Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {tickets.length === 0 && !loading ? (
+             <div className="col-span-2 text-center py-10 text-slate-500">
+               Belum ada laporan. Jadilah yang pertama melapor!
+             </div>
+          ) : (
+            tickets.slice(0, 4).map((t) => (
+              /* Report Card */
+              <div
+                key={t.id}
+                className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                      t.status === "SELESAI"
+                        ? "bg-success/10 text-success"
+                        : t.status === "PROSES"
+                        ? "bg-warning/10 text-warning"
+                        : "bg-primary/10 text-primary"
                     }`}
                   >
-                    {ticket.status}
-                  </Badge>
-                  <span className="text-xs text-gray-400">
-                    {new Date(ticket.created_at).toLocaleDateString()}
+                    {t.status === "PENDING" ? "Menunggu" : t.status === "PROSES" ? "Sedang Proses" : "Selesai"}
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">
+                    {new Date(t.created_at).toLocaleDateString("id-ID", {
+                        day: '2-digit', month: 'short', year: 'numeric'
+                    })}
                   </span>
                 </div>
-                <h3 className="font-bold text-lg mb-2 text-primary">{ticket.title}</h3>
-                <p className="text-gray-600 text-sm line-clamp-2">{ticket.description}</p>
-                <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">
-                  <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-primary font-bold">
-                    {ticket.user_email ? ticket.user_email[0].toUpperCase() : 'U'}
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+                  {t.title}
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-2 mb-6">
+                  {t.description}
+                </p>
+                <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-slate-400 text-sm">
+                      location_on
+                    </span>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                      Blok A
+                    </span>
                   </div>
-                  <span>Oleh: {ticket.user_email || 'Anonim'}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-400 italic">
+                      Pelapor:{" "}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                      {t.user_email?.split('@')[0] || "Anonim"}***
+                    </span>
+                  </div>
                 </div>
-              </Card>
-            ))}
-          </div>
-        )}
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="mt-12 text-center">
+          <Link href="/dashboard">
+            <button className="px-10 py-3 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-primary transition-colors flex items-center gap-2 mx-auto">
+                Lihat Semua Laporan
+                <span className="material-symbols-outlined text-lg">
+                arrow_forward
+                </span>
+            </button>
+          </Link>
+        </div>
       </main>
 
-      {/* FAB (Floating Action Button) - Khas Google Material */}
-      <Link href="/dashboard">
-        <button className="fixed bottom-8 right-8 w-16 h-16 bg-primary text-white rounded-2xl shadow-lg hover:shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95">
-          <Plus className="w-8 h-8" />
-        </button>
-      </Link>
+      {/* Footer */}
+      <footer className="bg-white dark:bg-slate-900 py-10 border-t border-slate-200 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">
+              home_pin
+            </span>
+            <span className="font-black text-slate-800 dark:text-white">
+              SapaIKMP
+            </span>
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+            Copyright © 2024 SapaIKMP - Kelola Aspirasi Warga.
+          </p>
+          <div className="flex gap-6">
+            <a
+              href="#"
+              className="text-slate-400 hover:text-primary transition-colors"
+            >
+              <span className="material-symbols-outlined">public</span>
+            </a>
+            <a
+              href="#"
+              className="text-slate-400 hover:text-primary transition-colors"
+            >
+              <span className="material-symbols-outlined">mail</span>
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
