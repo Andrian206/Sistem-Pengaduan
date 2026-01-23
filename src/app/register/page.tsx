@@ -68,8 +68,8 @@ export default function RegisterPage() {
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-6 antialiased font-display text-slate-900 dark:text-slate-100">
-      <div className="w-full max-w-[450px]">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 md:p-10 border border-slate-100 dark:border-slate-700">
+      <div className="w-full max-w-[400px]">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-100 dark:border-slate-700">
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-10 h-10 bg-primary flex items-center justify-center rounded-xl text-white shadow-lg shadow-primary/30">
@@ -192,7 +192,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-[48px] bg-warning hover:bg-[#d95b03] text-white font-bold rounded-full shadow-md shadow-warning/20 transition-all mt-6 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full h-12 bg-warning hover:bg-[#d95b03] text-white font-bold rounded-full shadow-md shadow-warning/20 transition-all mt-6 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
             >
               {loading ? "Mendaftarkan..." : "Daftar Sekarang"}
             </button>
