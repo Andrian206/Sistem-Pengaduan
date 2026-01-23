@@ -1,65 +1,129 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import { supabase } from "@/utils/supabase";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Search, Plus, Filter } from "lucide-react";
+import Link from "next/link";
+
+export default function GuestHome() {
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  // 1. Fetch Data dari Supabase
+  useEffect(() => {
+    async function fetchData() {
+      // Ambil data tickets, urutkan dari yg terbaru
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (data) setTickets(data);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  // 2. Filter Logic Sederhana
+  const filteredTickets = tickets.filter((t) =>
+    t.title.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-background font-sans text-text pb-20">
+      
+      {/* === HEADER (Google Style) === */}
+      <header className="bg-surface sticky top-0 z-10 px-6 py-4 shadow-sm flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {/* Logo Sederhana */}
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">L</div>
+          <span className="font-bold text-xl tracking-tight text-primary">LaporAja</span>
+        </div>
+        <div className="flex gap-3">
+          <Link href="/login">
+            <Button variant="outline" className="rounded-full border-primary text-primary hover:bg-secondary">
+              Masuk / Daftar
+            </Button>
+          </Link>
+        </div>
+      </header>
+
+      {/* === HERO SECTION === */}
+      <main className="max-w-4xl mx-auto px-6 mt-10">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-text">
+            Ada masalah apa hari ini?
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-gray-500 mb-8 text-lg">
+            Sampaikan keluhanmu, kami akan menyelesaikannya.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+          {/* Search Bar (Pill Shape) */}
+          <div className="relative max-w-lg mx-auto shadow-md rounded-full">
+            <Search className="absolute left-4 top-3.5 text-gray-400 w-5 h-5" />
+            <Input 
+              className="pl-12 h-12 rounded-full border-none bg-surface text-lg focus-visible:ring-2 focus-visible:ring-primary"
+              placeholder="Cari keluhan (misal: AC Panas)..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
         </div>
+
+        {/* === GRID STATUS (Pemisah) === */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">Laporan Terbaru</h2>
+          <Button variant="ghost" className="text-primary hover:bg-secondary rounded-full">
+            <Filter className="w-4 h-4 mr-2" /> Filter
+          </Button>
+        </div>
+
+        {/* === LIST LAPORAN (Card View) === */}
+        {loading ? (
+          <p className="text-center py-10 text-gray-500">Memuat data...</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredTickets.map((ticket) => (
+              <Card key={ticket.id} className="p-5 rounded-lg border-none shadow-sm hover:shadow-md transition-all bg-surface cursor-pointer">
+                <div className="flex justify-between items-start mb-3">
+                  <Badge 
+                    className={`rounded-full px-3 py-1 font-normal ${
+                      ticket.status === 'SELESAI' ? 'bg-accent text-white' : 
+                      ticket.status === 'PROSES' ? 'bg-yellow-400 text-black' : 
+                      'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {ticket.status}
+                  </Badge>
+                  <span className="text-xs text-gray-400">
+                    {new Date(ticket.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <h3 className="font-bold text-lg mb-2 text-primary">{ticket.title}</h3>
+                <p className="text-gray-600 text-sm line-clamp-2">{ticket.description}</p>
+                <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">
+                  <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-primary font-bold">
+                    {ticket.user_email ? ticket.user_email[0].toUpperCase() : 'U'}
+                  </div>
+                  <span>Oleh: {ticket.user_email || 'Anonim'}</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
+
+      {/* FAB (Floating Action Button) - Khas Google Material */}
+      <Link href="/dashboard">
+        <button className="fixed bottom-8 right-8 w-16 h-16 bg-primary text-white rounded-2xl shadow-lg hover:shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95">
+          <Plus className="w-8 h-8" />
+        </button>
+      </Link>
     </div>
   );
 }

@@ -1,0 +1,7 @@
+import { createClient } from '@supabase/supabase-js';
+
+// GANTI DENGAN PUNYA ANDA
+const supabaseUrl = 'https://arlgjiovhmeminsbpder.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFybGdqaW92aG1lbWluc2JwZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1OTIwNjcsImV4cCI6MjA4MTE2ODA2N30.WSbx3URMrw9D4JN7HZIvNPGNw0ot9YAg5lHYjySmtfQ';
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
