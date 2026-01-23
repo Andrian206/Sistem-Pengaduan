@@ -2,9 +2,6 @@
 
 import { useState } from "react";
 import { supabase } from "@/utils/supabase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -14,19 +11,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     // Coba Login
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
-      // Kalau gagal login, coba Register otomatis (Cheat biar cepet)
-      const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
-      if (signUpError) {
-        alert(error.message);
-      } else {
-        alert("Akun baru dibuat! Silakan login.");
-      }
+       // Jika gagal login biasa, kita tidak otomatis sign up lagi demi keamanan yang lebih standar
+       // (Kecuali Anda memang ingin fitur auto-signup itu tetap ada, kabari saya)
+      alert(error.message);
     } else {
       // Login Sukses -> Lempar ke Dashboard
       router.push("/dashboard");
@@ -35,49 +29,93 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <Card className="w-full max-w-md p-8 rounded-2xl shadow-lg border-none bg-surface">
+    <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center justify-center p-6 antialiased font-display text-slate-900 dark:text-slate-100">
+      <div className="w-full max-w-[400px] bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-100 dark:border-slate-700">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 bg-primary flex items-center justify-center rounded-xl text-white mb-3 shadow-lg shadow-primary/30">
+            <span className="material-symbols-outlined text-3xl">home_pin</span>
+          </div>
+          <h1 className="text-xl font-black tracking-tight text-primary">SapaIKMP</h1>
+        </div>
+        
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-primary rounded-xl mx-auto flex items-center justify-center text-white text-2xl font-bold mb-4">L</div>
-          <h1 className="text-2xl font-bold text-text">Selamat Datang</h1>
-          <p className="text-gray-500">Masuk untuk mulai melapor masalah</p>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Selamat Datang Kembali</h2>
+          <p className="text-slate-500 dark:text-slate-400">Masuk untuk melanjutkan</p>
         </div>
 
-        <div className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="text-sm font-medium text-gray-700 ml-1">Email</label>
-            <Input 
+            <label 
+              className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1" 
+              htmlFor="email"
+            >
+              Email
+            </label>
+            <input 
+              id="email" 
               type="email" 
-              placeholder="nama@email.com" 
-              className="rounded-xl h-12 bg-gray-50 border-transparent focus:bg-white focus:border-primary transition-all"
+              required
+              className="w-full h-12 px-4 bg-slate-100 dark:bg-slate-700 border-none rounded-xl focus:ring-2 focus:ring-primary text-slate-900 dark:text-white placeholder:text-slate-400 transition-all outline-none" 
+              placeholder="nama@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 ml-1">Password</label>
-            <Input 
+            <label 
+              className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1" 
+              htmlFor="password"
+            >
+              Password
+            </label>
+            <input 
+              id="password" 
               type="password" 
-              placeholder="******" 
-              className="rounded-xl h-12 bg-gray-50 border-transparent focus:bg-white focus:border-primary transition-all"
+              required
+              className="w-full h-12 px-4 bg-slate-100 dark:bg-slate-700 border-none rounded-xl focus:ring-2 focus:ring-primary text-slate-900 dark:text-white placeholder:text-slate-400 transition-all outline-none"
+              placeholder="••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <div className="flex justify-end mt-2">
+              <a className="text-xs font-medium text-primary hover:underline cursor-pointer">Lupa Password?</a>
+            </div>
           </div>
 
-          <Button 
-            className="w-full h-12 text-lg rounded-full font-bold bg-primary hover:bg-blue-700 shadow-md hover:shadow-lg transition-all" 
-            onClick={handleLogin}
+          <button 
+            type="submit" 
             disabled={loading}
+            className="w-full h-12 bg-primary text-white font-bold rounded-full shadow-md shadow-primary/20 hover:brightness-110 active:scale-[0.98] transition-all mt-2 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            {loading ? "Memproses..." : "Masuk / Daftar"}
-          </Button>
+            {loading ? "Memproses..." : "Masuk"}
+          </button>
+        </form>
 
-          <div className="text-center mt-4">
-             <Link href="/" className="text-sm text-primary hover:underline">Kembali ke Halaman Utama</Link>
+        <div className="relative my-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-white dark:bg-slate-800 px-3 text-slate-500 dark:text-slate-400 font-medium">Belum punya akun?</span>
           </div>
         </div>
-      </Card>
+
+        <div className="text-center">
+          <Link href="/register" className="text-primary font-bold hover:underline">
+            Daftar sebagai Warga
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <Link 
+          href="/" 
+          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary transition-colors font-medium"
+        >
+          <span className="material-symbols-outlined text-base">arrow_back</span>
+          Kembali ke Beranda
+        </Link>
+      </div>
     </div>
   );
 }
