@@ -2,169 +2,327 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, AlertCircle, RefreshCw } from "lucide-react";
-import Link from "next/link";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 
 export default function AdminDashboard() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("ALL"); // ALL, PENDING, PROSES, SELESAI
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>(''); // Track user role untuk view-only mode
+  
+  const router = useRouter();
 
-  // 1. Fetch Semua Data
+  // 1. Fetch Data
   async function fetchTickets() {
     setLoading(true);
-    const { data } = await supabase
+    // Kita select semua ticket
+    const { data, error } = await supabase
       .from("tickets")
       .select("*")
       .order("created_at", { ascending: false });
-    
+
+    if (error) console.log(error);
     if (data) setTickets(data);
     setLoading(false);
   }
 
+  // 2. Cek Admin/RT - PROTEKSI AKTIF
   useEffect(() => {
-    fetchTickets();
-  }, []);
+    async function checkAccess() {
+       const { data: { user } } = await supabase.auth.getUser();
+       if (!user) {
+         router.push('/login');
+         return;
+       }
+       
+       // Debug
+       console.log('=== DEBUG ADMIN PAGE ===');
+       console.log('User ID:', user.id);
+       console.log('User Email:', user.email);
+       
+       // Cek tabel profiles untuk role
+       const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+       
+       // Debug
+       console.log('Profile data:', profile);
+       console.log('Profile error:', profileError);
+       console.log('Role:', profile?.role);
 
-  // 2. Logic Update Status
+       // Proteksi: Hanya admin dan rt yang bisa akses halaman ini
+       if (profile?.role !== 'admin' && profile?.role !== 'rt') {
+         console.log('Not admin/rt, redirecting to dashboard');
+         router.push('/dashboard');
+         return;
+       }
+       
+       // Set user role untuk conditional rendering
+       setUserRole(profile?.role || '');
+       console.log('Access verified! Role:', profile?.role);
+       
+       // Fetch data tickets
+       fetchTickets();
+       setIsCheckingAuth(false);
+    }
+    checkAccess();
+  }, [router]);
+
+  // 3. Update Status
   async function updateStatus(id: string, newStatus: string) {
-    // Update di Database
+    // Optimistic Update (Ubah UI dlu biar cepet)
+    setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
+
     const { error } = await supabase
       .from("tickets")
       .update({ status: newStatus })
       .eq("id", id);
-
-    if (!error) {
-      // Update tampilan di layar tanpa refresh
-      setTickets((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t))
-      );
-      alert(`Status berhasil diubah jadi ${newStatus}`);
-    } else {
-      alert("Gagal update status");
-    }
+      
+    if (error) alert("Gagal update status di server");
   }
 
-  // Hitung Statistik Sederhana
-  const total = tickets.length;
-  const pending = tickets.filter(t => t.status === 'PENDING').length;
-  const selesai = tickets.filter(t => t.status === 'SELESAI').length;
+  // 4. Hapus Laporan
+  async function deleteTicket(id: string) {
+    if(!confirm("Yakin ingin menghapus laporan ini?")) return;
+
+    setTickets((prev) => prev.filter((t) => t.id !== id)); // Hapus dari UI
+    await supabase.from("tickets").delete().eq("id", id);
+  }
+
+  // Filter Logic
+  const filteredData = tickets.filter(t => {
+    const matchSearch = t.title.toLowerCase().includes(search.toLowerCase()) || 
+                        (t.user_email && t.user_email.toLowerCase().includes(search.toLowerCase()));
+    const matchFilter = filter === "ALL" ? true : t.status === filter;
+    return matchSearch && matchFilter;
+  });
+
+  // Loading screen saat cek auth
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-500 font-medium">Memverifikasi akses...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background font-sans text-text">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       
-      {/* === NAVBAR ADMIN === */}
-      <nav className="bg-primary px-6 py-4 flex justify-between items-center shadow-md">
-        <h1 className="text-white font-bold text-xl flex items-center gap-2">
-          <div className="bg-white text-primary w-8 h-8 rounded-md flex items-center justify-center">A</div>
-          Admin Dashboard
-        </h1>
-        <div className="flex gap-4">
-            <Link href="/" className="text-white opacity-80 hover:opacity-100 text-sm">Lihat Web Utama</Link>
-            <Button variant="destructive" size="sm" className="rounded-full">Keluar</Button>
+      {/* HEADER ADMIN / KEPALA RT */}
+      <header className={`${userRole === 'rt' ? 'bg-gradient-to-r from-cyan-600 to-cyan-500' : 'bg-primary'} text-white sticky top-0 z-30 shadow-lg shadow-blue-900/10`}>
+        <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center font-bold border border-white/20">
+                    <span className="material-symbols-outlined text-xl">
+                      {userRole === 'rt' ? 'monitoring' : 'admin_panel_settings'}
+                    </span>
+                </div>
+                <div>
+                    <h1 className="font-bold text-base leading-tight">
+                      {userRole === 'rt' ? 'Monitor Kepala RT' : 'Admin SapaIKMP'}
+                    </h1>
+                    <p className="text-[10px] text-blue-200 uppercase tracking-wider">
+                      {userRole === 'rt' ? 'Mode Lihat Saja' : 'Panel Pengurus'}
+                    </p>
+                </div>
+            </div>
+            {/* Badge Role */}
+            {userRole === 'rt' && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full border border-white/20">
+                <span className="material-symbols-outlined text-sm">visibility</span>
+                <span className="text-xs font-semibold">Read-Only</span>
+              </div>
+            )}
+            <button 
+                onClick={() => { supabase.auth.signOut(); router.push('/'); }}
+                className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-white/10 hover:bg-white/20 rounded-full transition-all"
+            >
+                Keluar
+            </button>
         </div>
-      </nav>
+      </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         
-        {/* === STATS CARDS === */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <Card className="p-6 rounded-lg border-none shadow-sm flex items-center gap-4 bg-surface">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-primary">
-                    <AlertCircle />
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {[
+                { label: 'Masuk', count: tickets.filter(t => t.status === 'PENDING').length, color: 'text-warning', bg: 'bg-orange-50', border: 'border-orange-200' },
+                { label: 'Proses', count: tickets.filter(t => t.status === 'PROSES').length, color: 'text-primary', bg: 'bg-blue-50', border: 'border-blue-200' },
+                { label: 'Selesai', count: tickets.filter(t => t.status === 'SELESAI').length, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
+                { label: 'Total', count: tickets.length, color: 'text-slate-600', bg: 'bg-white', border: 'border-slate-200' },
+            ].map((stat, idx) => (
+                <div key={idx} className={`p-4 rounded-xl border ${stat.border} ${stat.bg} shadow-sm`}>
+                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">{stat.label}</p>
+                    <h3 className={`text-3xl font-black ${stat.color}`}>{stat.count}</h3>
                 </div>
-                <div>
-                    <p className="text-sm text-gray-500 ">Total Laporan</p>
-                    <h2 className="text-3xl font-bold">{total}</h2>
-                </div>
-            </Card>
-
-            <Card className="p-6 rounded-lg border-none shadow-sm flex items-center gap-4 bg-surface">
-                <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600">
-                    <Clock />
-                </div>
-                <div>
-                    <p className="text-sm text-gray-500">Perlu Proses</p>
-                    <h2 className="text-3xl font-bold">{pending}</h2>
-                </div>
-            </Card>
-
-            <Card className="p-6 rounded-lg border-none shadow-sm flex items-center gap-4 bg-surface">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-accent">
-                    <CheckCircle />
-                </div>
-                <div>
-                    <p className="text-sm text-gray-500">Selesai</p>
-                    <h2 className="text-3xl font-bold">{selesai}</h2>
-                </div>
-            </Card>
+            ))}
         </div>
 
-        {/* === TABEL MANAGEMENT === */}
-        <Card className="rounded-lg shadow-sm border-none bg-surface overflow-hidden">
-            <div className="p-6 border-b border-border flex justify-between items-center">
-                <h2 className="font-bold text-lg">Daftar Laporan Masuk</h2>
-                <Button variant="outline" size="sm" onClick={fetchTickets} className="rounded-full">
-                    <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-                </Button>
+        {/* TOOLBAR */}
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+            {/* Filter Tabs */}
+            <div className="flex p-1 bg-white rounded-xl border border-slate-200 shadow-sm w-fit overflow-x-auto">
+                {['ALL', 'PENDING', 'PROSES', 'SELESAI'].map((f) => (
+                    <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                            filter === f ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'
+                        }`}
+                    >
+                        {f === 'ALL' ? 'Semua' : f}
+                    </button>
+                ))}
             </div>
 
+            {/* Search */}
+            <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
+                <Input 
+                    placeholder="Cari Pelapor / Judul..." 
+                    className="pl-10 rounded-xl bg-white border-slate-200 w-full md:w-64 focus-visible:ring-primary shadow-sm"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+            </div>
+        </div>
+
+        {/* DATA TABLE */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-50 text-gray-500 border-b border-border">
+                    <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200">
                         <tr>
-                            <th className="px-6 py-4 font-medium">Tanggal</th>
-                            <th className="px-6 py-4 font-medium">Pelapor</th>
-                            <th className="px-6 py-4 font-medium">Masalah</th>
-                            <th className="px-6 py-4 font-medium">Status</th>
-                            <th className="px-6 py-4 font-medium text-right">Aksi</th>
+                            <th className="px-6 py-4">Waktu & Pelapor</th>
+                            <th className="px-6 py-4">Masalah</th>
+                            <th className="px-6 py-4">Bukti</th>
+                            <th className="px-6 py-4">Status</th>
+                            {userRole === 'admin' && <th className="px-6 py-4 text-right">Aksi</th>}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-slate-100">
                         {loading ? (
-                            <tr><td colSpan={5} className="p-6 text-center text-gray-500">Loading data...</td></tr>
-                        ) : tickets.map((t) => (
-                            <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4 text-gray-500">
-                                    {new Date(t.created_at).toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4 font-medium text-primary">
-                                    {t.user_email || "Anonim"}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="font-medium">{t.title}</div>
-                                    <div className="text-xs text-gray-500 truncate max-w-[200px]">{t.description}</div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <Badge className={`rounded-full font-normal ${
-                                        t.status === 'SELESAI' ? 'bg-accent hover:bg-green-600' : 
-                                        t.status === 'PROSES' ? 'bg-yellow-400 hover:bg-yellow-500 text-black' : 
-                                        'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                                    }`}>
-                                        {t.status}
-                                    </Badge>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    {/* Dropdown Native biar enteng */}
-                                    <select 
-                                        className="bg-white border border-border rounded-md text-xs py-1 px-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
-                                        value={t.status}
-                                        onChange={(e) => updateStatus(t.id, e.target.value)}
-                                    >
-                                        <option value="PENDING">Pending</option>
-                                        <option value="PROSES">Proses</option>
-                                        <option value="SELESAI">Selesai</option>
-                                    </select>
-                                </td>
-                            </tr>
-                        ))}
+                             <tr><td colSpan={userRole === 'admin' ? 5 : 4} className="p-8 text-center text-slate-400">Memuat data...</td></tr>
+                        ) : filteredData.length === 0 ? (
+                            <tr><td colSpan={userRole === 'admin' ? 5 : 4} className="p-12 text-center text-slate-400 flex flex-col items-center gap-2">
+                                <span className="material-symbols-outlined text-4xl opacity-20">search_off</span>
+                                Tidak ada data ditemukan.
+                            </td></tr>
+                        ) : (
+                            filteredData.map((t) => (
+                                <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-6 py-4 align-top">
+                                        <div className="text-xs text-slate-400 mb-1">
+                                            {new Date(t.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} • {new Date(t.created_at).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}
+                                        </div>
+                                        <div className="font-bold text-slate-800">
+                                            {t.user_email ? t.user_email : 'Anonim'}
+                                        </div>
+                                    </td>
+                                    
+                                    <td className="px-6 py-4 align-top max-w-xs">
+                                        <div className="font-bold text-slate-800 mb-1">{t.title}</div>
+                                        <p className="text-xs text-slate-500 line-clamp-2">{t.description}</p>
+                                    </td>
+
+                                    <td className="px-6 py-4 align-top">
+                                        {t.image_url ? (
+                                            <button 
+                                                onClick={() => setSelectedImage(t.image_url)}
+                                                className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200 hover:ring-2 hover:ring-primary transition-all relative group"
+                                            >
+                                                <img src={t.image_url} className="w-full h-full object-cover" alt="Proof"/>
+                                                <div className="absolute inset-0 bg-black/30 hidden group-hover:flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-white text-sm">visibility</span>
+                                                </div>
+                                            </button>
+                                        ) : (
+                                            <span className="text-xs text-slate-400 italic">Tidak ada</span>
+                                        )}
+                                    </td>
+
+                                    <td className="px-6 py-4 align-top">
+                                        {/* Admin: Dropdown untuk update status */}
+                                        {userRole === 'admin' ? (
+                                          <div className="relative">
+                                              <select 
+                                                  className={`
+                                                      appearance-none cursor-pointer rounded-full pl-3 pr-8 py-1.5 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-offset-1 transition-all
+                                                      ${t.status === 'PENDING' ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' : ''}
+                                                      ${t.status === 'PROSES' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : ''}
+                                                      ${t.status === 'SELESAI' ? 'bg-green-100 text-green-700 hover:bg-green-200' : ''}
+                                                  `}
+                                                  value={t.status}
+                                                  onChange={(e) => updateStatus(t.id, e.target.value)}
+                                              >
+                                                  <option value="PENDING">🕒 Pending</option>
+                                                  <option value="PROSES">🛠️ Proses</option>
+                                                  <option value="SELESAI">✅ Selesai</option>
+                                              </select>
+                                              <span className="material-symbols-outlined absolute right-2 top-1.5 text-sm pointer-events-none opacity-50">expand_more</span>
+                                          </div>
+                                        ) : (
+                                          /* RT: Badge status (read-only) */
+                                          <span className={`
+                                            inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold
+                                            ${t.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : ''}
+                                            ${t.status === 'PROSES' ? 'bg-blue-100 text-blue-700' : ''}
+                                            ${t.status === 'SELESAI' ? 'bg-green-100 text-green-700' : ''}
+                                          `}>
+                                            {t.status === 'PENDING' && '🕒'}
+                                            {t.status === 'PROSES' && '🛠️'}
+                                            {t.status === 'SELESAI' && '✅'}
+                                            {t.status}
+                                          </span>
+                                        )}
+                                    </td>
+
+                                    {/* Admin only: Delete button */}
+                                    {userRole === 'admin' && (
+                                      <td className="px-6 py-4 align-top text-right">
+                                          <button 
+                                              onClick={() => deleteTicket(t.id)}
+                                              className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-all"
+                                              title="Hapus Laporan"
+                                          >
+                                              <span className="material-symbols-outlined text-lg">delete</span>
+                                          </button>
+                                      </td>
+                                    )}
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
-        </Card>
+        </div>
       </main>
+
+      {/* IMAGE MODAL */}
+      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+        <DialogContent className="sm:max-w-2xl bg-transparent border-none shadow-none p-0 flex items-center justify-center">
+            {selectedImage && (
+                <img 
+                    src={selectedImage} 
+                    alt="Bukti Full" 
+                    className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl"
+                />
+            )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

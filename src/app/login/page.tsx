@@ -14,17 +14,39 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
     // Coba Login
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
-       // Jika gagal login biasa, kita tidak otomatis sign up lagi demi keamanan yang lebih standar
-       // (Kecuali Anda memang ingin fitur auto-signup itu tetap ada, kabari saya)
       alert(error.message);
+      setLoading(false);
+      return;
+    }
+    
+    // Login Sukses -> Cek Role dari tabel profiles
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', authData.user?.id)
+      .single();
+    
+    // Debug: Log untuk melihat hasil query
+    console.log('=== DEBUG LOGIN ===');
+    console.log('User ID:', authData.user?.id);
+    console.log('Profile data:', profile);
+    console.log('Profile error:', profileError);
+    console.log('Role:', profile?.role);
+    
+    // Redirect berdasarkan role
+    if (profile?.role === 'admin' || profile?.role === 'rt') {
+      console.log('Redirecting to /admin (role: ' + profile?.role + ')');
+      router.push("/admin");
     } else {
-      // Login Sukses -> Lempar ke Dashboard
+      console.log('Redirecting to /dashboard (role: ' + profile?.role + ')');
       router.push("/dashboard");
     }
+    
     setLoading(false);
   };
 
@@ -104,6 +126,36 @@ export default function LoginPage() {
           <Link href="/register" className="text-primary font-bold hover:underline">
             Daftar sebagai Warga
           </Link>
+        </div>
+
+        {/* Demo Credentials */}
+        <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-600">
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 text-center">
+            🔐 Demo Login
+          </p>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <span className="w-14 px-1.5 py-0.5 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 rounded text-[10px] font-bold text-center">USER</span>
+              <div className="flex-1">
+                <p className="text-slate-700 dark:text-slate-300 font-medium">usersapa123@gmail.com</p>
+                <p className="text-slate-400 text-[10px]">pass: usersapa123</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <span className="w-14 px-1.5 py-0.5 bg-primary/20 text-primary rounded text-[10px] font-bold text-center">ADMIN</span>
+              <div className="flex-1">
+                <p className="text-slate-700 dark:text-slate-300 font-medium">adminsapa123@gmail.com</p>
+                <p className="text-slate-400 text-[10px]">pass: adminsapa123</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <span className="w-14 px-1.5 py-0.5 bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-400 rounded text-[10px] font-bold text-center">RT</span>
+              <div className="flex-1">
+                <p className="text-slate-700 dark:text-slate-300 font-medium">pakrt123@gmail.com</p>
+                <p className="text-slate-400 text-[10px]">pass: pakrt123</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

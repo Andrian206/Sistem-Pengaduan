@@ -10,10 +10,17 @@ export default function LandingPage() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("tickets")
         .select("*")
         .order("created_at", { ascending: false });
+      
+      // Debug: Log untuk melihat hasil query
+      console.log('=== DEBUG LANDING PAGE ===');
+      console.log('Tickets data:', data);
+      console.log('Tickets error:', error);
+      console.log('Tickets count:', data?.length);
+      
       if (data) setTickets(data);
       setLoading(false);
     }

@@ -2,215 +2,153 @@
 
 import { useState } from "react";
 import { supabase } from "@/utils/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    block: "",
-    houseNumber: "",
-    whatsapp: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    startTerm: false
-  });
-  
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  
+  // State Form Data
+  const [formData, setFormData] = useState({
+    fullName: "",
+    blok: "",
+    phone: "",
+    email: "",
+    password: ""
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRegister = async () => {
+    // 1. Validasi Sederhana
+    if (!formData.fullName || !formData.blok || !formData.email || !formData.password) {
+      alert("Mohon lengkapi semua data wajib!");
+      return;
+    }
+
     setLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
-      alert("Password dan Konfirmasi Password tidak sama!");
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.startTerm) {
-      alert("Silakan setujui syarat dan ketentuan.");
-      setLoading(false);
-      return;
-    }
-
+    // 2. Register ke Supabase Auth + KIRIM METADATA
     const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
       options: {
+        // INI KUNCINYA: Data ini akan ditangkap oleh Trigger SQL tadi
         data: {
           full_name: formData.fullName,
-          block: formData.block,
-          house_number: formData.houseNumber,
-          whatsapp: formData.whatsapp,
-        },
-      },
+          blok_rumah: formData.blok,
+          phone: formData.phone
+        }
+      }
     });
 
     if (error) {
-      alert(error.message);
+      alert("Gagal Daftar: " + error.message);
     } else {
-      alert("Registrasi berhasil! Silakan cek email untuk verifikasi.");
-      router.push("/login");
+      alert("Pendaftaran Berhasil! Selamat datang warga baru.");
+      // Login otomatis sukses, lempar ke dashboard
+      router.push("/dashboard");
     }
     setLoading(false);
   };
 
   return (
-    <div className="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-6 antialiased font-display text-slate-900 dark:text-slate-100">
-      <div className="w-full max-w-[400px]">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-100 dark:border-slate-700">
-          <div className="flex flex-col items-center mb-8">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-10 h-10 bg-primary flex items-center justify-center rounded-xl text-white shadow-lg shadow-primary/30">
-                <span className="material-symbols-outlined text-2xl">home_pin</span>
-              </div>
-              <span className="text-xl font-black tracking-tight text-primary">SapaIKMP</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Daftar Akun Warga</h1>
-            <p className="text-slate-500 dark:text-slate-400 text-center">Lengkapi data untuk verifikasi keanggotaan</p>
-          </div>
-
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Nama Lengkap (sesuai KTP)</label>
-              <input
-                name="fullName"
-                type="text"
-                required
-                placeholder="Contoh: Budi Santoso"
-                className="w-full h-[48px] px-4 bg-slate-100 dark:bg-slate-700 border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-600 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
-                value={formData.fullName}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Blok</label>
-                <input
-                  name="block"
-                  type="text"
-                  required
-                  placeholder="Contoh: C"
-                  className="w-full h-[48px] px-4 bg-slate-100 dark:bg-slate-700 border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-600 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
-                  value={formData.block}
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Nomor Rumah</label>
-                <input
-                  name="houseNumber"
-                  type="text"
-                  required
-                  placeholder="Contoh: 12"
-                  className="w-full h-[48px] px-4 bg-slate-100 dark:bg-slate-700 border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-600 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
-                  value={formData.houseNumber}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">No. WhatsApp</label>
-              <input
-                name="whatsapp"
-                type="tel"
-                required
-                placeholder="08xxxxxxxxxx"
-                className="w-full h-[48px] px-4 bg-slate-100 dark:bg-slate-700 border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-600 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
-                value={formData.whatsapp}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Email</label>
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder="nama@email.com"
-                className="w-full h-[48px] px-4 bg-slate-100 dark:bg-slate-700 border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-600 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Password</label>
-              <div className="relative">
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  className="w-full h-[48px] px-4 bg-slate-100 dark:bg-slate-700 border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-600 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none pr-12"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-                <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                  <span className="material-symbols-outlined text-[20px]">visibility</span>
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Konfirmasi Password</label>
-              <input
-                name="confirmPassword"
-                type="password"
-                required
-                placeholder="••••••••"
-                className="w-full h-[48px] px-4 bg-slate-100 dark:bg-slate-700 border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-600 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="flex items-start gap-3 pt-2">
-              <div className="flex items-center h-5">
-                <input
-                  name="startTerm"
-                  id="privacy"
-                  type="checkbox"
-                  required
-                  className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary focus:ring-offset-0 cursor-pointer"
-                  checked={formData.startTerm}
-                  onChange={handleChange}
-                />
-              </div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 leading-normal cursor-pointer" htmlFor="privacy">
-                Saya menyetujui data saya digunakan untuk keperluan verifikasi pengurus IKMP dan menyetujui <a href="#" className="text-primary font-semibold hover:underline">kebijakan privasi</a>.
-              </label>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-12 bg-warning hover:bg-[#d95b03] text-white font-bold rounded-full shadow-md shadow-warning/20 transition-all mt-6 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
-            >
-              {loading ? "Mendaftarkan..." : "Daftar Sekarang"}
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 text-center">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Sudah punya akun?
-              <Link href="/login" className="text-primary font-bold hover:underline ml-1">
-                Masuk
-              </Link>
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center p-4 font-sans text-foreground">
+      
+      <Card className="w-full max-w-lg overflow-hidden border-none shadow-xl rounded-2xl bg-surface">
+        {/* Header Biru SapaIKMP */}
+        <div className="bg-primary p-8 text-center">
+            <h1 className="text-2xl font-bold text-white mb-1">Pendaftaran Warga</h1>
+            <p className="text-blue-100 text-sm">Bergabung dengan SapaIKMP untuk lingkungan yang lebih baik.</p>
         </div>
-        <p className="text-center text-slate-400 text-[13px] mt-8">
-          Copyright © 2024 SapaIKMP - Kelola Aspirasi Warga.
-        </p>
-      </div>
+
+        <div className="p-8 space-y-5">
+            {/* Form Input */}
+            <div className="space-y-4">
+                
+                {/* Nama Lengkap */}
+                <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Nama Lengkap (Sesuai KTP)</label>
+                    <Input 
+                        name="fullName"
+                        placeholder="Contoh: Budi Santoso" 
+                        className="mt-1 h-12 bg-gray-50 border-gray-200 focus:bg-white focus:border-primary rounded-xl"
+                        onChange={handleChange}
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    {/* Blok Rumah */}
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Blok / No. Rumah</label>
+                        <Input 
+                            name="blok"
+                            placeholder="A5 / 12" 
+                            className="mt-1 h-12 bg-gray-50 border-gray-200 focus:bg-white focus:border-primary rounded-xl"
+                            onChange={handleChange}
+                        />
+                    </div>
+                    {/* No HP (Opsional) */}
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">No. WhatsApp</label>
+                        <Input 
+                            name="phone"
+                            placeholder="0812..." 
+                            type="tel"
+                            className="mt-1 h-12 bg-gray-50 border-gray-200 focus:bg-white focus:border-primary rounded-xl"
+                            onChange={handleChange}
+                        />
+                    </div>
+                </div>
+
+                <div className="h-px bg-gray-100 my-2"></div>
+
+                {/* Akun Login */}
+                <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Email Aktif</label>
+                    <Input 
+                        name="email"
+                        type="email"
+                        placeholder="email@anda.com" 
+                        className="mt-1 h-12 bg-gray-50 border-gray-200 focus:bg-white focus:border-primary rounded-xl"
+                        onChange={handleChange}
+                    />
+                </div>
+                <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Password</label>
+                    <Input 
+                        name="password"
+                        type="password"
+                        placeholder="Minimal 6 karakter" 
+                        className="mt-1 h-12 bg-gray-50 border-gray-200 focus:bg-white focus:border-primary rounded-xl"
+                        onChange={handleChange}
+                    />
+                </div>
+
+            </div>
+
+            {/* Tombol Aksi */}
+            <Button 
+                onClick={handleRegister} 
+                className="w-full h-12 text-lg font-bold rounded-full bg-gradient-to-r from-primary to-blue-600 hover:to-blue-700 shadow-lg shadow-blue-200 transition-all mt-4"
+                disabled={loading}
+            >
+                {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Daftar Sekarang"}
+            </Button>
+
+            <p className="text-center text-sm text-gray-500 mt-4">
+                Sudah punya akun? <Link href="/login" className="text-primary font-bold hover:underline">Masuk disini</Link>
+            </p>
+        </div>
+      </Card>
+
     </div>
   );
 }
