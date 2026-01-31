@@ -1,37 +1,33 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/utils/supabase";
+import { supabase, canAccessAdminPanel, ROLE_PERMISSIONS, type Ticket, type UserRole } from "@/utils/supabase";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 
 export default function AdminDashboard() {
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("ALL"); // ALL, PENDING, PROSES, SELESAI
+  const [filter, setFilter] = useState("ALL");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string>(''); // Track user role untuk view-only mode
+  const [userRole, setUserRole] = useState<UserRole>('warga');
   
   const router = useRouter();
 
-  // 1. Fetch Data
   async function fetchTickets() {
     setLoading(true);
-    // Kita select semua ticket
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("tickets")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) console.log(error);
-    if (data) setTickets(data);
+    if (data) setTickets(data as Ticket[]);
     setLoading(false);
   }
 
-  // 2. Cek Admin/RT - PROTEKSI AKTIF
   useEffect(() => {
     async function checkAccess() {
        const { data: { user } } = await supabase.auth.getUser();
@@ -40,45 +36,32 @@ export default function AdminDashboard() {
          return;
        }
        
-       // Debug
-       console.log('=== DEBUG ADMIN PAGE ===');
-       console.log('User ID:', user.id);
-       console.log('User Email:', user.email);
-       
-       // Cek tabel profiles untuk role
-       const { data: profile, error: profileError } = await supabase
+       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
-       
-       // Debug
-       console.log('Profile data:', profile);
-       console.log('Profile error:', profileError);
-       console.log('Role:', profile?.role);
 
-       // Proteksi: Hanya admin dan rt yang bisa akses halaman ini
-       if (profile?.role !== 'admin' && profile?.role !== 'rt') {
-         console.log('Not admin/rt, redirecting to dashboard');
+       const role = (profile?.role as UserRole) || 'warga';
+
+       if (!canAccessAdminPanel(role)) {
          router.push('/dashboard');
          return;
        }
        
-       // Set user role untuk conditional rendering
-       setUserRole(profile?.role || '');
-       console.log('Access verified! Role:', profile?.role);
-       
-       // Fetch data tickets
+       setUserRole(role);
        fetchTickets();
        setIsCheckingAuth(false);
     }
     checkAccess();
   }, [router]);
 
-  // 3. Update Status
+  const permissions = ROLE_PERMISSIONS[userRole];
+
   async function updateStatus(id: string, newStatus: string) {
-    // Optimistic Update (Ubah UI dlu biar cepet)
-    setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
+    if (!permissions.canUpdateStatus) return;
+    
+    setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus as Ticket['status'] } : t)));
 
     const { error } = await supabase
       .from("tickets")
@@ -88,11 +71,11 @@ export default function AdminDashboard() {
     if (error) alert("Gagal update status di server");
   }
 
-  // 4. Hapus Laporan
   async function deleteTicket(id: string) {
+    if (!permissions.canDeleteTicket) return;
     if(!confirm("Yakin ingin menghapus laporan ini?")) return;
 
-    setTickets((prev) => prev.filter((t) => t.id !== id)); // Hapus dari UI
+    setTickets((prev) => prev.filter((t) => t.id !== id));
     await supabase.from("tickets").delete().eq("id", id);
   }
 
@@ -119,29 +102,29 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       
-      {/* HEADER ADMIN / KEPALA RT */}
-      <header className={`${userRole === 'rt' ? 'bg-gradient-to-r from-cyan-600 to-cyan-500' : 'bg-primary'} text-white sticky top-0 z-30 shadow-lg shadow-blue-900/10`}>
+      {/* HEADER ADMIN / KEPALA RT / KETUA RT */}
+      <header className={`${userRole === 'rt' ? 'bg-gradient-to-r from-cyan-600 to-cyan-500' : userRole === 'ketua_rt' ? 'bg-gradient-to-r from-emerald-600 to-emerald-500' : 'bg-primary'} text-white sticky top-0 z-30 shadow-lg shadow-blue-900/10`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
             <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center font-bold border border-white/20">
                     <span className="material-symbols-outlined text-xl">
-                      {userRole === 'rt' ? 'monitoring' : 'admin_panel_settings'}
+                      {userRole === 'rt' ? 'monitoring' : userRole === 'ketua_rt' ? 'verified_user' : 'admin_panel_settings'}
                     </span>
                 </div>
                 <div>
                     <h1 className="font-bold text-base leading-tight">
-                      {userRole === 'rt' ? 'Monitor Kepala RT' : 'Admin SapaIKMP'}
+                      {permissions.label} SapaIKMP
                     </h1>
                     <p className="text-[10px] text-blue-200 uppercase tracking-wider">
-                      {userRole === 'rt' ? 'Mode Lihat Saja' : 'Panel Pengurus'}
+                      {!permissions.canUpdateStatus ? 'Mode Lihat Saja' : !permissions.canDeleteTicket ? 'Mode Update Status' : 'Panel Pengurus'}
                     </p>
                 </div>
             </div>
             {/* Badge Role */}
-            {userRole === 'rt' && (
+            {!permissions.canDeleteTicket && (
               <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full border border-white/20">
-                <span className="material-symbols-outlined text-sm">visibility</span>
-                <span className="text-xs font-semibold">Read-Only</span>
+                <span className="material-symbols-outlined text-sm">{permissions.canUpdateStatus ? 'edit' : 'visibility'}</span>
+                <span className="text-xs font-semibold">{permissions.canUpdateStatus ? 'Update Only' : 'Read-Only'}</span>
               </div>
             )}
             <button 
@@ -209,14 +192,14 @@ export default function AdminDashboard() {
                             <th className="px-6 py-4">Masalah</th>
                             <th className="px-6 py-4">Bukti</th>
                             <th className="px-6 py-4">Status</th>
-                            {userRole === 'admin' && <th className="px-6 py-4 text-right">Aksi</th>}
+                            {permissions.canDeleteTicket && <th className="px-6 py-4 text-right">Aksi</th>}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {loading ? (
-                             <tr><td colSpan={userRole === 'admin' ? 5 : 4} className="p-8 text-center text-slate-400">Memuat data...</td></tr>
+                             <tr><td colSpan={permissions.canDeleteTicket ? 5 : 4} className="p-8 text-center text-slate-400">Memuat data...</td></tr>
                         ) : filteredData.length === 0 ? (
-                            <tr><td colSpan={userRole === 'admin' ? 5 : 4} className="p-12 text-center text-slate-400 flex flex-col items-center gap-2">
+                            <tr><td colSpan={permissions.canDeleteTicket ? 5 : 4} className="p-12 text-center text-slate-400 flex flex-col items-center gap-2">
                                 <span className="material-symbols-outlined text-4xl opacity-20">search_off</span>
                                 Tidak ada data ditemukan.
                             </td></tr>
@@ -254,8 +237,8 @@ export default function AdminDashboard() {
                                     </td>
 
                                     <td className="px-6 py-4 align-top">
-                                        {/* Admin: Dropdown untuk update status */}
-                                        {userRole === 'admin' ? (
+                                        {/* Roles with update permission: Dropdown untuk update status */}
+                                        {permissions.canUpdateStatus ? (
                                           <div className="relative">
                                               <select 
                                                   className={`
@@ -274,7 +257,7 @@ export default function AdminDashboard() {
                                               <span className="material-symbols-outlined absolute right-2 top-1.5 text-sm pointer-events-none opacity-50">expand_more</span>
                                           </div>
                                         ) : (
-                                          /* RT: Badge status (read-only) */
+                                          /* Read-only roles: Badge status */
                                           <span className={`
                                             inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold
                                             ${t.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : ''}
@@ -290,7 +273,7 @@ export default function AdminDashboard() {
                                     </td>
 
                                     {/* Admin only: Delete button */}
-                                    {userRole === 'admin' && (
+                                    {permissions.canDeleteTicket && (
                                       <td className="px-6 py-4 align-top text-right">
                                           <button 
                                               onClick={() => deleteTicket(t.id)}

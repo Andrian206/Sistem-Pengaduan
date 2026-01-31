@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SapaIKMP - Sistem Pengaduan Warga
+
+Aplikasi pengaduan warga berbasis web untuk lingkungan IKMP.
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Database & Auth**: Supabase
+- **Styling**: Tailwind CSS + Shadcn/UI
+- **Language**: TypeScript
+
+## User Roles
+
+| Role | Akses | Permissions |
+|------|-------|-------------|
+| `admin` | `/admin` | View all tickets, Update status, Delete tickets |
+| `ketua_rt` | `/admin` | View all tickets, Update status |
+| `rt` | `/admin` | View all tickets (read-only) |
+| `warga` | `/dashboard` | Create tickets, View own tickets |
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone & Install
+
+```bash
+npm install
+```
+
+### 2. Setup Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
+
+```bash
+cp .env.example .env.local
+```
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 3. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database Setup (Supabase)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Profiles Table
 
-## Learn More
+```sql
+CREATE TABLE profiles (
+  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  email TEXT,
+  role TEXT DEFAULT 'warga' CHECK (role IN ('admin', 'rt', 'ketua_rt', 'warga')),
+  full_name TEXT,
+  blok_rumah TEXT,
+  phone TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-To learn more about Next.js, take a look at the following resources:
+-- Enable RLS
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Tickets Table
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```sql
+CREATE TABLE tickets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PROSES', 'SELESAI')),
+  user_id UUID REFERENCES auth.users,
+  user_email TEXT,
+  image_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
+```
+
+## Demo Credentials
+
+| Role | Email | Password |
+|------|-------|----------|
+| Warga | usersapa123@gmail.com | usersapa123 |
+| Admin | adminsapa123@gmail.com | adminsapa123 |
+| RT | pakrt123@gmail.com | pakrt123 |
+| Ketua RT | ketuart@gmail.com | ketuart123 |
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for details.

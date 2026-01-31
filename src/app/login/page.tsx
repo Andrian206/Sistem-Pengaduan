@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/utils/supabase";
+import { supabase, canAccessAdminPanel, ROLE_PERMISSIONS, type UserRole } from "@/utils/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -15,7 +15,6 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     
-    // Coba Login
     const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
@@ -24,29 +23,16 @@ export default function LoginPage() {
       return;
     }
     
-    // Login Sukses -> Cek Role dari tabel profiles
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', authData.user?.id)
       .single();
     
-    // Debug: Log untuk melihat hasil query
-    console.log('=== DEBUG LOGIN ===');
-    console.log('User ID:', authData.user?.id);
-    console.log('Profile data:', profile);
-    console.log('Profile error:', profileError);
-    console.log('Role:', profile?.role);
+    const userRole = (profile?.role as UserRole) || 'warga';
+    const permissions = ROLE_PERMISSIONS[userRole];
     
-    // Redirect berdasarkan role
-    if (profile?.role === 'admin' || profile?.role === 'rt') {
-      console.log('Redirecting to /admin (role: ' + profile?.role + ')');
-      router.push("/admin");
-    } else {
-      console.log('Redirecting to /dashboard (role: ' + profile?.role + ')');
-      router.push("/dashboard");
-    }
-    
+    router.push(permissions.dashboardPath);
     setLoading(false);
   };
 
@@ -153,6 +139,13 @@ export default function LoginPage() {
               <div className="flex-1">
                 <p className="text-slate-700 dark:text-slate-300 font-medium">pakrt123@gmail.com</p>
                 <p className="text-slate-400 text-[10px]">pass: pakrt123</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
+              <span className="w-14 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 rounded text-[10px] font-bold text-center">K.RT</span>
+              <div className="flex-1">
+                <p className="text-slate-700 dark:text-slate-300 font-medium">ketuart@gmail.com</p>
+                <p className="text-slate-400 text-[10px]">pass: ketuart123</p>
               </div>
             </div>
           </div>

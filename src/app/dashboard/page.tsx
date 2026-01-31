@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect, ChangeEvent } from "react";
-import { supabase } from "@/utils/supabase";
+import { supabase, canAccessAdminPanel, type Ticket, type UserRole } from "@/utils/supabase";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function UserDashboard() {
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [open, setOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
@@ -22,7 +22,6 @@ export default function UserDashboard() {
   
   const router = useRouter();
 
-  // 1. Cek User Login, Role & Fetch Data
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -31,43 +30,28 @@ export default function UserDashboard() {
         return;
       }
       
-      // Debug: Log user info
-      console.log('=== DEBUG DASHBOARD ===');
-      console.log('User ID:', user.id);
-      console.log('User Email:', user.email);
-      
-      // Cek role - jika admin, redirect ke halaman admin
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
       
-      // Debug: Log profile info
-      console.log('Profile data:', profile);
-      console.log('Profile error:', profileError);
-      console.log('Role:', profile?.role);
+      const userRole = (profile?.role as UserRole) || 'warga';
       
-      // Jika admin atau rt, redirect ke halaman admin
-      if (profile?.role === 'admin' || profile?.role === 'rt') {
-        console.log('User is admin/rt, redirecting to /admin');
+      if (canAccessAdminPanel(userRole)) {
         router.push("/admin");
         return;
       }
       
-      setUser(user);
+      setUser({ id: user.id, email: user.email || '' });
 
-      const { data, error: ticketsError } = await supabase
+      const { data } = await supabase
         .from("tickets")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       
-      // Debug: Log tickets
-      console.log('Tickets data:', data);
-      console.log('Tickets error:', ticketsError);
-      
-      if (data) setTickets(data);
+      if (data) setTickets(data as Ticket[]);
       setIsCheckingAuth(false);
     }
     init();

@@ -1,27 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/utils/supabase";
+import { supabase, type Ticket } from "@/utils/supabase";
 import Link from "next/link";
 
 export default function LandingPage() {
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("tickets")
         .select("*")
         .order("created_at", { ascending: false });
       
-      // Debug: Log untuk melihat hasil query
-      console.log('=== DEBUG LANDING PAGE ===');
-      console.log('Tickets data:', data);
-      console.log('Tickets error:', error);
-      console.log('Tickets count:', data?.length);
-      
-      if (data) setTickets(data);
+      if (data) setTickets(data as Ticket[]);
       setLoading(false);
     }
     fetchData();
