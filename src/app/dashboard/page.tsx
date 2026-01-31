@@ -68,6 +68,7 @@ export default function UserDashboard() {
 
   // 2. Logic Kirim Laporan
   async function submitTicket() {
+    if (!user) return alert("Session tidak valid. Silakan login kembali.");
     if (!title || !desc) return alert("Mohon isi judul dan deskripsi!");
     setLoading(true);
 
