@@ -29,8 +29,14 @@ export default function LoginPage() {
       .eq('id', authData.user?.id)
       .single();
     
-    const userRole = (profile?.role as UserRole) || 'warga';
+    const userRole: UserRole = (profile?.role as UserRole) || 'warga';
     const permissions = ROLE_PERMISSIONS[userRole];
+    
+    if (!permissions) {
+      alert('Role tidak valid. Hubungi administrator.');
+      setLoading(false);
+      return;
+    }
     
     router.push(permissions.dashboardPath);
     setLoading(false);

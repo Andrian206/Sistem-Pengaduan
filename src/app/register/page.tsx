@@ -35,28 +35,38 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    // 2. Register ke Supabase Auth + KIRIM METADATA
-    const { data, error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        // INI KUNCINYA: Data ini akan ditangkap oleh Trigger SQL tadi
-        data: {
-          full_name: formData.fullName,
-          blok_rumah: formData.blok,
-          phone: formData.phone
+    try {
+      // 2. Register ke Supabase Auth + KIRIM METADATA
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          // INI KUNCINYA: Data ini akan ditangkap oleh Trigger SQL tadi
+          data: {
+            full_name: formData.fullName,
+            blok_rumah: formData.blok,
+            phone: formData.phone
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`
         }
-      }
-    });
+      });
 
-    if (error) {
-      alert("Gagal Daftar: " + error.message);
-    } else {
-      alert("Pendaftaran Berhasil! Selamat datang warga baru.");
-      // Login otomatis sukses, lempar ke dashboard
-      router.push("/dashboard");
+      if (error) throw error;
+
+      // Check if email confirmation is required
+      if (data?.user && !data.session) {
+        alert("Pendaftaran Berhasil! Silakan cek email Anda untuk konfirmasi akun.");
+        router.push("/login");
+      } else if (data.session) {
+        alert("Pendaftaran Berhasil! Selamat datang warga baru.");
+        router.push("/dashboard");
+      }
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      alert("Gagal Daftar: " + (error.message || "Terjadi kesalahan. Periksa koneksi internet Anda."));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
