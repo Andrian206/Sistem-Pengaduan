@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent, useCallback } from "react";
-import { supabase, type Ticket } from "@/utils/supabase";
+import { useState, useEffect, ChangeEvent } from "react";
+import { supabase, type Ticket, getToken, apiCreateTicket } from "@/utils/supabase-secure";
 import { useAuthSecure } from "@/hooks/useAuthSecure";
 import { useToast } from "@/hooks/useToast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -22,8 +22,8 @@ export default function UserDashboard() {
   // Toast notifications
   const toast = useToast();
   
-  // Menggunakan useAuth hook - semua logic auth ditangani di sini
-  const { user, isLoading: isCheckingAuth, logout } = useAuthSecure({
+  // Menggunakan useAuthSecure hook - autentikasi aman
+  const { user, token, isLoading: isCheckingAuth, logout } = useAuthSecure({
     requireAuth: true,           // Redirect ke login jika tidak authenticated
     redirectAdminToPanel: true,  // Admin/RT/Ketua RT redirect ke /admin
   });
@@ -63,9 +63,11 @@ export default function UserDashboard() {
     }
   };
 
-  // 2. Logic Kirim Laporan
+  // Logic Kirim Laporan (SECURE via API)
   async function submitTicket() {
-    if (!user) {
+    const currentToken = token || getToken();
+    
+    if (!currentToken || !user) {
       toast.error("Session tidak valid. Silakan login kembali.");
       return;
     }
@@ -84,7 +86,7 @@ export default function UserDashboard() {
         const filePath = `${user.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('attachments') // Pastikan bucket 'attachments' ada di Supabase Storage
+          .from('attachments')
           .upload(filePath, image);
 
         if (uploadError) throw uploadError;
@@ -96,17 +98,14 @@ export default function UserDashboard() {
         imageUrl = publicUrlData.publicUrl;
       }
 
-      const { error } = await supabase.from("tickets").insert({
-        title: title,
-        description: desc,
-        user_id: user.id,
-        status: "PENDING",
-        image_url: imageUrl
-      });
+      // Create ticket via secure API
+      const result = await apiCreateTicket(currentToken, title, desc, imageUrl);
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error || 'Gagal membuat laporan');
+      }
 
-      // Refresh tickets tanpa reload halaman
+      // Refresh tickets
       const { data: newTickets } = await supabase
         .from("tickets")
         .select("*")
@@ -119,6 +118,7 @@ export default function UserDashboard() {
       setTitle("");
       setDesc("");
       setImage(null);
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
       setImagePreview(null);
       setOpen(false);
       
@@ -138,7 +138,7 @@ export default function UserDashboard() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-500 font-medium">Memuat...</p>
+          <p className="text-slate-500 font-medium">Memverifikasi session...</p>
         </div>
       </div>
     );
@@ -155,6 +155,9 @@ export default function UserDashboard() {
               <span className="material-symbols-outlined text-xl">home_pin</span>
             </div>
             <h2 className="text-lg font-bold tracking-tight text-primary hidden sm:block">SapaIKMP</h2>
+            <span className="text-[8px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold hidden sm:inline">
+              🔒 Secure
+            </span>
           </div>
           <div className="flex items-center gap-4">
              <button onClick={logout} className="text-sm font-semibold text-red-500 hover:text-red-600 transition-colors">
@@ -216,7 +219,7 @@ export default function UserDashboard() {
         </div>
       </main>
 
-      {/* FAB + DIALOG FORM (FIXED SCROLL) */}
+      {/* FAB + DIALOG FORM */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
             <button className="fixed bottom-6 right-6 w-14 h-14 bg-warning text-white rounded-2xl flex items-center justify-center shadow-lg shadow-warning/30 hover:scale-105 active:scale-95 transition-all z-40">
@@ -224,7 +227,6 @@ export default function UserDashboard() {
             </button>
         </DialogTrigger>
         
-        {/* === PERBAIKAN SCROLL DI SINI === */}
         <DialogContent className="sm:max-w-[425px] max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-white rounded-2xl">
             
             {/* Header Sticky */}

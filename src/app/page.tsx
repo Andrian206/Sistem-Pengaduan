@@ -10,10 +10,15 @@ export default function LandingPage() {
 
   useEffect(() => {
     async function fetchData() {
+      // Join dengan users untuk mendapat info pelapor
       const { data } = await supabase
         .from("tickets")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select(`
+          *,
+          user:users(id, email, full_name, blok_rumah)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(10); // Batasi hanya 10 terbaru untuk landing page
       
       if (data) setTickets(data as Ticket[]);
       setLoading(false);
@@ -212,7 +217,7 @@ export default function LandingPage() {
                       location_on
                     </span>
                     <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                      Blok A
+                      Blok {t.user?.blok_rumah || '-'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -220,7 +225,7 @@ export default function LandingPage() {
                       Pelapor:{" "}
                     </span>
                     <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                      {t.user_email?.split('@')[0] || "Anonim"}***
+                      {t.user?.full_name?.split(' ')[0] || "Anonim"}***
                     </span>
                   </div>
                 </div>

@@ -35,7 +35,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-xl font-black tracking-tight text-primary">SapaIKMP</h1>
           <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full mt-1 font-bold">
-            🔒 Production Mode
+            🔒 Secure Mode
           </span>
         </div>
         
@@ -127,33 +127,14 @@ export default function LoginPage() {
                 <p className="text-slate-400 text-[10px]">pass: adminsapa123</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
-              <span className="w-14 px-1.5 py-0.5 bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-400 rounded text-[10px] font-bold text-center">RT</span>
-              <div className="flex-1">
-                <p className="text-slate-700 dark:text-slate-300 font-medium">pakrt123@gmail.com</p>
-                <p className="text-slate-400 text-[10px]">pass: pakrt123</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
-              <span className="w-14 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 rounded text-[10px] font-bold text-center">K.RT</span>
-              <div className="flex-1">
-                <p className="text-slate-700 dark:text-slate-300 font-medium">ketuart@gmail.com</p>
-                <p className="text-slate-400 text-[10px]">pass: ketuart123</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-8">
-        <Link 
-          href="/" 
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary transition-colors font-medium"
-        >
-          <span className="material-symbols-outlined text-base">arrow_back</span>
-          Kembali ke Beranda
-        </Link>
-      </div>
+      {/* Footer */}
+      <p className="mt-8 text-xs text-slate-400">
+        &copy; 2025 SapaIKMP - Secure Authentication
+      </p>
     </div>
   );
 }

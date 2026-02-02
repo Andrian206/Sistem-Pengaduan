@@ -28,6 +28,7 @@ export default function RegisterPage() {
   };
 
   const handleRegister = async () => {
+    // 1. Validasi Sederhana
     if (!formData.fullName || !formData.blok || !formData.email || !formData.password) {
       toast.warning("Mohon lengkapi semua data wajib!");
       return;
@@ -65,7 +66,7 @@ export default function RegisterPage() {
             <h1 className="text-2xl font-bold text-white mb-1">Pendaftaran Warga</h1>
             <p className="text-blue-100 text-sm">Bergabung dengan SapaIKMP untuk lingkungan yang lebih baik.</p>
             <span className="inline-block mt-2 text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-full font-bold">
-              🔒 Production Mode
+              🔒 Secure Mode
             </span>
         </div>
 
@@ -146,8 +147,12 @@ export default function RegisterPage() {
                 {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Daftar Sekarang"}
             </Button>
 
-            <p className="text-center text-sm text-gray-500 mt-4">
-                Sudah punya akun? <Link href="/login" className="text-primary font-bold hover:underline">Masuk di sini</Link>
+            {/* Link ke Login */}
+            <p className="text-center text-sm text-gray-500 pt-4">
+                Sudah punya akun?{" "}
+                <Link href="/login-secure" className="text-primary font-bold hover:underline">
+                    Masuk di sini
+                </Link>
             </p>
         </div>
       </Card>
