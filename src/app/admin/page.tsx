@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase, type Ticket } from "@/utils/supabase";
+import { 
+  supabase, 
+  type Ticket,
+  type TicketStatus,
+  getToken,
+  apiUpdateTicketStatus,
+  apiDeleteTicket
+} from "@/utils/supabase-secure";
 import { useAuthSecure } from "@/hooks/useAuthSecure";
 import { useToast } from "@/hooks/useToast";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -18,9 +25,11 @@ export default function AdminDashboard() {
   const toast = useToast();
   
   // Menggunakan useAuth hook - semua logic auth ditangani di sini
+  // Sekarang juga mengambil token untuk RPC calls
   const { 
     role: userRole, 
     permissions, 
+    token,
     isLoading: isCheckingAuth, 
     logout 
   } = useAuthSecure({
@@ -30,12 +39,12 @@ export default function AdminDashboard() {
 
   async function fetchTickets() {
     setLoading(true);
-    // Join dengan tabel users untuk mendapatkan email pelapor
+    // Join dengan public_users view (tidak expose password)
     const { data } = await supabase
       .from("tickets")
       .select(`
         *,
-        user:users(id, email, full_name, blok_rumah)
+        user:public_users(id, email, full_name, blok_rumah)
       `)
       .order("created_at", { ascending: false });
 
@@ -50,45 +59,64 @@ export default function AdminDashboard() {
     }
   }, [isCheckingAuth]);
 
-  async function updateStatus(id: string, newStatus: string) {
-    if (!permissions?.canUpdateStatus) return;
+  async function updateStatus(id: string, newStatus: TicketStatus) {
+    if (!permissions?.canUpdateStatus) {
+      toast.error("Anda tidak memiliki akses untuk update status");
+      return;
+    }
+    
+    const currentToken = token || getToken();
+    if (!currentToken) {
+      toast.error("Session tidak valid");
+      return;
+    }
     
     // Simpan state sebelumnya untuk rollback
     const previousTickets = [...tickets];
     
-    setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus as Ticket['status'] } : t)));
+    // Optimistic update
+    setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
 
-    const { error } = await supabase
-      .from("tickets")
-      .update({ status: newStatus })
-      .eq("id", id);
+    // Gunakan secure API function untuk update dengan validasi role di server
+    const result = await apiUpdateTicketStatus(currentToken, id, newStatus);
       
-    if (error) {
+    if (!result.success) {
       // Rollback ke state sebelumnya
       setTickets(previousTickets);
-      toast.error("Gagal update status di server");
+      toast.error(result.error || "Gagal update status di server");
     } else {
       toast.success("Status berhasil diupdate");
     }
   }
 
   async function deleteTicket(id: string) {
-    if (!permissions?.canDeleteTicket) return;
+    if (!permissions?.canDeleteTicket) {
+      toast.error("Anda tidak memiliki akses untuk hapus laporan");
+      return;
+    }
     
     // Menggunakan native confirm untuk konfirmasi delete
     if(!confirm("Yakin ingin menghapus laporan ini?")) return;
 
+    const currentToken = token || getToken();
+    if (!currentToken) {
+      toast.error("Session tidak valid");
+      return;
+    }
+
     // Simpan state sebelumnya untuk rollback
     const previousTickets = [...tickets];
     
+    // Optimistic update
     setTickets((prev) => prev.filter((t) => t.id !== id));
     
-    const { error } = await supabase.from("tickets").delete().eq("id", id);
+    // Gunakan secure API function untuk delete dengan validasi role di server
+    const result = await apiDeleteTicket(currentToken, id);
     
-    if (error) {
+    if (!result.success) {
       // Rollback ke state sebelumnya
       setTickets(previousTickets);
-      toast.error("Gagal menghapus laporan");
+      toast.error(result.error || "Gagal menghapus laporan");
     } else {
       toast.success("Laporan berhasil dihapus");
     }
@@ -268,7 +296,7 @@ export default function AdminDashboard() {
                                                       ${t.status === 'SELESAI' ? 'bg-green-100 text-green-700 hover:bg-green-200' : ''}
                                                   `}
                                                   value={t.status}
-                                                  onChange={(e) => updateStatus(t.id, e.target.value)}
+                                                  onChange={(e) => updateStatus(t.id, e.target.value as TicketStatus)}
                                               >
                                                   <option value="PENDING">🕒 Pending</option>
                                                   <option value="PROSES">🛠️ Proses</option>
