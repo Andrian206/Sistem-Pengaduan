@@ -30,9 +30,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files (JANGAN commit file env dengan credentials!)
+.env
+.env.*
+!.env.example
 .env.local
+.env.development
+.env.production
+.env.test
 
 # vercel
 .vercel
@@ -40,3 +45,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

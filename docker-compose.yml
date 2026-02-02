@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    container_name: sistem-pengaduan
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # Tambahkan environment variables dari .env
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Development mode (uncomment jika diperlukan)
+  # app-dev:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.dev
+  #   container_name: sistem-pengaduan-dev
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - .:/app
+  #     - /app/node_modules
+  #   environment:
+  #     - NODE_ENV=development
+  #   command: npm run dev

@@ -6,9 +6,12 @@
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/Andrian206/Sistem-Pengaduan)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-orange?style=for-the-badge)](https://github.com/Andrian206/Sistem-Pengaduan/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0-orange?style=for-the-badge)](https://github.com/Andrian206/Sistem-Pengaduan/releases)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
 
 [Live Demo](https://sistem-pengaduan.vercel.app) · [Report Bug](https://github.com/Andrian206/Sistem-Pengaduan/issues) · [Request Feature](https://github.com/Andrian206/Sistem-Pengaduan/issues)
@@ -28,6 +31,7 @@
   - [Solution](#solution)
 - [Technical Architecture](#-technical-architecture)
   - [Tech Stack](#tech-stack)
+  - [Architecture Comparison](#architecture-comparison)
   - [Project Architecture](#project-architecture)
   - [Directory Structure](#directory-structure)
 - [Key Features](#-key-features)
@@ -36,6 +40,7 @@
   - [Installation](#installation)
   - [Configuration](#configuration)
   - [Database Setup](#database-setup)
+  - [Docker Deployment](#docker-deployment)
 - [Usage](#-usage)
 - [API Reference](#-api-reference)
 - [Deployment](#-deployment)
@@ -52,27 +57,22 @@
 
 ### Overview
 
-SapaIKMP adalah aplikasi web pengaduan warga yang dirancang khusus untuk lingkungan IKMP. Dibangun dengan Next.js 16 dan Supabase, aplikasi ini menyediakan platform digital bagi warga untuk menyampaikan keluhan, saran, dan laporan kepada pengurus RT dengan mudah dan transparan.
-
-> **Note:** Aplikasi ini sudah production-ready dan dapat di-deploy ke Vercel.
+**SapaIKMP** adalah platform digital yang memudahkan warga IKMP untuk menyampaikan pengaduan, keluhan, atau aspirasi kepada pengurus RT secara efisien dan transparan. Proyek ini tersedia dalam **dua versi arsitektur**: Demo (untuk pengembangan) dan Production (untuk deployment).
 
 ### Problem Statement
 
-Pengelolaan pengaduan warga di lingkungan perumahan seringkali menghadapi berbagai kendala:
-
-- 📝 **Proses Manual** - Pengaduan masih menggunakan cara konvensional (kertas/lisan)
-- 🔍 **Kurang Transparansi** - Warga tidak dapat memantau status pengaduan mereka
-- ⏱️ **Respon Lambat** - Tidak ada sistem prioritas dan tracking yang jelas
-- 📊 **Tidak Ada Dokumentasi** - Sulit melacak histori pengaduan sebelumnya
+- ❌ Proses pengaduan tradisional yang lambat dan tidak efisien
+- ❌ Kurangnya transparansi dalam penanganan keluhan
+- ❌ Sulit melacak status pengaduan
+- ❌ Dokumentasi yang tidak terorganisir
 
 ### Solution
 
-SapaIKMP menyediakan solusi digital yang komprehensif:
-
-- ✅ **Platform Digital** - Warga dapat mengajukan pengaduan kapan saja, di mana saja
-- ✅ **Real-time Tracking** - Status pengaduan dapat dipantau secara real-time (PENDING → PROSES → SELESAI)
-- ✅ **Role-Based Access** - Sistem dengan 4 level akses (Admin, Ketua RT, RT, Warga)
-- ✅ **Dokumentasi Lengkap** - Semua pengaduan tercatat dengan bukti foto dan timestamp
+- ✅ Platform digital terintegrasi untuk pengaduan real-time
+- ✅ Tracking status pengaduan yang transparan
+- ✅ Role-based access control untuk pengelolaan yang terstruktur
+- ✅ Dokumentasi otomatis dengan attachment gambar
+- ✅ **Arsitektur production-ready** dengan keamanan bcrypt & session token
 
 ---
 
@@ -80,57 +80,31 @@ SapaIKMP menyediakan solusi digital yang komprehensif:
 
 ### Tech Stack
 
-<table>
-<tr>
-<td align="center" width="200">
+<div align="center">
 
-**Frontend**
+| Frontend | Backend | Database | DevOps |
+|:--------:|:-------:|:--------:|:------:|
+| ![Next.js](https://img.shields.io/badge/Next.js_15-black?style=flat-square&logo=next.js) | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white) | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white) | ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white) |
+| ![React 19](https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black) | ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js&logoColor=white) | ![Supabase Storage](https://img.shields.io/badge/Storage-3ECF8E?style=flat-square&logo=supabase&logoColor=white) | ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white) |
+| ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white) | ![pgcrypto](https://img.shields.io/badge/pgcrypto-336791?style=flat-square&logo=postgresql&logoColor=white) | | |
+| ![Tailwind CSS](https://img.shields.io/badge/Tailwind-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) | | | |
+| ![shadcn/ui](https://img.shields.io/badge/shadcn/ui-000000?style=flat-square&logo=shadcnui&logoColor=white) | | | |
 
-</td>
-<td align="center" width="200">
+</div>
 
-**Backend & Database**
+### Architecture Comparison
 
-</td>
-<td align="center" width="200">
+| Aspek | Versi Demo (Simple) | Versi Production (Secure) |
+|-------|:-------------------:|:-------------------------:|
+| Password Storage | Plain text ❌ | Bcrypt hash (pgcrypto) ✅ |
+| Auth Flow | Client-side query | Server-side RPC functions |
+| Session | localStorage (user data) | Token-based + server verification |
+| RLS | Disabled | Enabled dengan policies |
+| Permission Check | Frontend only | Server-side via functions |
+| Audit Trail | Tidak ada | Lengkap (audit_logs table) |
+| Data Exposure | Password terekspos | Password tersembunyi via VIEW |
 
-**Styling**
-
-</td>
-<td align="center" width="200">
-
-**DevOps**
-
-</td>
-</tr>
-<tr>
-<td align="center">
-
-![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=flat&logo=nextdotjs&logoColor=white)
-![React](https://img.shields.io/badge/React_19-20232A?style=flat&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
-
-</td>
-<td align="center">
-
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat&logo=supabase&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)
-
-</td>
-<td align="center">
-
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)
-![Shadcn/UI](https://img.shields.io/badge/Shadcn/UI-000000?style=flat&logo=shadcnui&logoColor=white)
-
-</td>
-<td align="center">
-
-![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat&logo=vercel&logoColor=white)
-![ESLint](https://img.shields.io/badge/ESLint-4B32C3?style=flat&logo=eslint&logoColor=white)
-
-</td>
-</tr>
-</table>
+> 📚 Lihat [ARCHITECTURE.md](ARCHITECTURE.md) untuk dokumentasi arsitektur lengkap.
 
 ### Project Architecture
 
@@ -147,23 +121,14 @@ Proyek ini menggunakan **Next.js App Router** dengan arsitektur berbasis kompone
           │                │                      │
           ▼                ▼                      ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                         DOMAIN LAYER                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │   Types     │  │    Utils    │  │     Validations         │  │
-│  │ (Profiles,  │  │   (lib/)    │  │   (Role-based)          │  │
-│  │  Tickets)   │  │             │  │                         │  │
-│  └──────┬──────┘  └──────┬──────┘  └────────────┬────────────┘  │
-└─────────┼────────────────┼──────────────────────┼───────────────┘
-          │                │                      │
-          ▼                ▼                      ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                          DATA LAYER                              │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │                    Supabase Client                          ││
-│  │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌──────────┐ ││
-│  │  │   Auth    │  │  Database │  │  Storage  │  │   RLS    │ ││
-│  │  └───────────┘  └───────────┘  └───────────┘  └──────────┘ ││
-│  └─────────────────────────────────────────────────────────────┘│
+│                         DATA LAYER                               │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                    Supabase Client                        │   │
+│  │  ┌────────────┐  ┌────────────┐  ┌────────────────────┐  │   │
+│  │  │    Auth    │  │  Database  │  │      Storage       │  │   │
+│  │  │ (Sessions) │  │   (RLS)    │  │   (Attachments)    │  │   │
+│  │  └────────────┘  └────────────┘  └────────────────────┘  │   │
+│  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -179,21 +144,33 @@ sistem-pengaduan/
 │   │   ├── globals.css      # Global styles
 │   │   ├── layout.tsx       # Root layout
 │   │   ├── page.tsx         # Landing page
-│   │   ├── 📁 admin/        # Admin dashboard
-│   │   ├── 📁 dashboard/    # User dashboard
-│   │   ├── 📁 login/        # Authentication
-│   │   └── 📁 register/     # User registration
+│   │   ├── 📁 admin/        # Admin dashboard (demo)
+│   │   ├── 📁 admin-secure/ # Admin dashboard (production)
+│   │   ├── 📁 dashboard/    # User dashboard (demo)
+│   │   ├── 📁 dashboard-secure/ # User dashboard (production)
+│   │   ├── 📁 login/        # Authentication (demo)
+│   │   ├── 📁 login-secure/ # Authentication (production)
+│   │   ├── 📁 register/     # User registration (demo)
+│   │   └── 📁 register-secure/ # User registration (production)
 │   ├── 📁 components/
 │   │   └── 📁 ui/           # Shadcn UI components
 │   ├── 📁 hooks/            # Custom React hooks
-│   │   ├── useAuth.ts       # Authentication hook
+│   │   ├── useAuth.ts       # Demo authentication hook
+│   │   ├── useAuthSecure.ts # Production authentication hook
 │   │   └── useToast.tsx     # Toast notifications
 │   ├── 📁 lib/              # Utility functions
 │   └── 📁 utils/            # Supabase clients
+│       ├── supabase.ts      # Demo client
+│       └── supabase-secure.ts # Production client
 ├── 📄 .env.example          # Environment template
+├── 📄 docker-compose.yml    # Docker configuration
+├── 📄 Dockerfile            # Multi-stage Docker build
 ├── 📄 package.json          # Dependencies
 ├── 📄 tailwind.config.ts    # Tailwind configuration
 ├── 📄 tsconfig.json         # TypeScript config
+├── 📄 ARCHITECTURE.md       # Architecture documentation
+├── 📄 SISTEM.md             # Backend system documentation
+├── 📄 CREATE_USERS.md       # Testing users guide
 └── 📄 README.md             # Documentation
 ```
 
@@ -203,7 +180,7 @@ sistem-pengaduan/
 
 | Feature | Description |
 |---------|-------------|
-| 🔐 **Authentication** | Sistem autentikasi aman dengan Supabase Auth |
+| 🔐 **Dual Authentication** | Demo (simple) & Production (bcrypt + session token) |
 | 👥 **Role-Based Access Control** | 4 level user (Admin, Ketua RT, RT, Warga) dengan permissions berbeda |
 | 📝 **Ticket Management** | CRUD operasi lengkap untuk pengaduan warga |
 | 🖼️ **Image Upload** | Dukungan upload foto sebagai bukti pengaduan |
@@ -211,6 +188,8 @@ sistem-pengaduan/
 | 📱 **Responsive Design** | Mobile-first design, optimal di semua perangkat |
 | 🔒 **Row Level Security** | Keamanan data dengan Supabase RLS policies |
 | ⚡ **Server Components** | Performa optimal dengan React Server Components |
+| 🐳 **Docker Ready** | Multi-stage Dockerfile untuk deployment |
+| 📋 **Audit Logging** | Tracking aksi penting (production version) |
 
 ---
 
@@ -225,6 +204,7 @@ Pastikan Anda sudah menginstall:
 | Node.js | >= 18.x | [nodejs.org](https://nodejs.org/) |
 | npm / yarn / pnpm | Latest | Included with Node.js |
 | Git | >= 2.x | [git-scm.com](https://git-scm.com/) |
+| Docker (optional) | >= 20.x | [docker.com](https://www.docker.com/) |
 | Supabase Account | - | [supabase.com](https://supabase.com/) |
 
 ```bash
@@ -232,6 +212,7 @@ Pastikan Anda sudah menginstall:
 node --version
 npm --version
 git --version
+docker --version # optional
 ```
 
 ### Installation
@@ -290,12 +271,14 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 Jalankan SQL berikut di Supabase SQL Editor:
 
 <details>
-<summary>📊 Profiles Table</summary>
+<summary>📊 Demo Version (Simple)</summary>
 
 ```sql
-CREATE TABLE profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
-  email TEXT,
+-- Tabel users (simple, tanpa auth.users)
+CREATE TABLE users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
   role TEXT DEFAULT 'warga' CHECK (role IN ('admin', 'rt', 'ketua_rt', 'warga')),
   full_name TEXT,
   blok_rumah TEXT,
@@ -303,32 +286,49 @@ CREATE TABLE profiles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Enable RLS
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-```
-
-</details>
-
-<details>
-<summary>🎫 Tickets Table</summary>
-
-```sql
+-- Tabel tickets
 CREATE TABLE tickets (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
   description TEXT,
   status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PROSES', 'SELESAI')),
-  user_id UUID REFERENCES auth.users,
+  user_id UUID REFERENCES users(id),
   user_email TEXT,
   image_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- Enable RLS
-ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
 ```
 
 </details>
+
+<details>
+<summary>🔒 Production Version (Secure)</summary>
+
+Lihat file `supabase-production.sql` atau dokumentasi di [ARCHITECTURE.md](ARCHITECTURE.md) untuk setup lengkap dengan:
+- Password hashing (bcrypt via pgcrypto)
+- Session token management
+- RLS policies
+- Audit logging
+- Secure RPC functions
+
+</details>
+
+### Docker Deployment
+
+```bash
+# Build dengan environment variables
+docker build \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL=your_url \
+  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key \
+  -t sapaikmp .
+
+# Run container
+docker run -p 3000:3000 sapaikmp
+
+# Atau menggunakan docker-compose
+docker-compose up -d
+```
 
 ---
 
@@ -343,6 +343,15 @@ ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
 | **RT** | `/admin` | ✅ All | ❌ | ❌ | ❌ |
 | **Warga** | `/dashboard` | Own only | ✅ | ❌ | ❌ |
 
+### Demo vs Production Endpoints
+
+| Feature | Demo Version | Production Version |
+|---------|:------------:|:------------------:|
+| Login | `/login` | `/login-secure` |
+| Register | `/register` | `/register-secure` |
+| Dashboard | `/dashboard` | `/dashboard-secure` |
+| Admin | `/admin` | `/admin-secure` |
+
 ### Demo Credentials
 
 | Role | Email | Password |
@@ -353,6 +362,7 @@ ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
 | 👑 Ketua RT | ketuart@gmail.com | ketuart123 |
 
 > ⚠️ **Warning:** Kredensial ini hanya untuk demo. Jangan gunakan di production.
+> 📚 Lihat [CREATE_USERS.md](CREATE_USERS.md) untuk panduan membuat akun testing.
 
 ### Ticket Status Flow
 
@@ -370,28 +380,38 @@ ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
 <details>
 <summary>🔐 Authentication</summary>
 
-### Sign Up
+### Sign Up (Demo)
 
 ```typescript
-const { data, error } = await supabase.auth.signUp({
-  email: 'user@example.com',
-  password: 'password123',
-});
+const { data: newUser, error } = await supabase
+  .from('users')
+  .insert({
+    email: 'user@example.com',
+    password: 'password123', // Plain text (demo only!)
+    full_name: 'User Name',
+    role: 'warga'
+  })
+  .select()
+  .single();
 ```
 
-### Sign In
+### Sign Up (Production)
 
 ```typescript
-const { data, error } = await supabase.auth.signInWithPassword({
-  email: 'user@example.com',
-  password: 'password123',
-});
+const result = await apiRegister(
+  'user@example.com',
+  'password123',
+  'User Name',
+  'Blok A1',
+  '08123456789'
+);
 ```
 
-### Sign Out
+### Sign In (Production)
 
 ```typescript
-const { error } = await supabase.auth.signOut();
+const result = await apiLogin('user@example.com', 'password123');
+// Returns: { success, user, token, error }
 ```
 
 </details>
@@ -414,17 +434,19 @@ const { data, error } = await supabase
 const { data, error } = await supabase
   .from('tickets')
   .insert({
-    title: 'Judul Pengaduan',
-    description: 'Deskripsi lengkap...',
-    user_id: userId,
-    user_email: userEmail,
+    title: 'Lampu Jalan Mati',
+    description: 'Lampu di depan blok A tidak menyala',
+    user_id: user.id,
+    user_email: user.email,
+    status: 'PENDING',
+    image_url: uploadedImageUrl
   });
 ```
 
 ### Update Ticket Status
 
 ```typescript
-const { data, error } = await supabase
+const { error } = await supabase
   .from('tickets')
   .update({ status: 'PROSES' })
   .eq('id', ticketId);
@@ -450,6 +472,21 @@ npm run build
 npm run start
 ```
 
+### Docker Deployment
+
+```bash
+# Using docker-compose
+docker-compose up -d
+
+# Or build manually
+docker build \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL=your_url \
+  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key \
+  -t sapaikmp .
+
+docker run -p 3000:3000 sapaikmp
+```
+
 ### Environment Variables on Vercel
 
 Tambahkan environment variables berikut di Vercel Dashboard:
@@ -463,24 +500,32 @@ Tambahkan environment variables berikut di Vercel Dashboard:
 
 ## 🗺️ Roadmap
 
-### Version 1.0 (Current) ✅
-- [x] Sistem autentikasi dengan Supabase
+### Version 1.0 ✅
+- [x] Sistem autentikasi sederhana
 - [x] CRUD operasi untuk tickets
 - [x] Role-based access control
 - [x] Responsive UI dengan Tailwind CSS
 - [x] Upload gambar untuk bukti
 
-### Version 1.1 (Planned)
+### Version 2.0 (Current) ✅
+- [x] Production-ready authentication (bcrypt + session token)
+- [x] Server-side RPC functions
+- [x] Audit logging
+- [x] Docker support
+- [x] Dual architecture (demo & production)
+
+### Version 2.1 (Planned)
 - [ ] Notifikasi real-time
 - [ ] Email notification saat status berubah
 - [ ] Dashboard analytics untuk Admin
 - [ ] Export laporan ke PDF
 
-### Version 2.0 (Future)
+### Version 3.0 (Future)
 - [ ] Push notifications
 - [ ] Chat langsung dengan RT
 - [ ] Multi-bahasa (i18n)
 - [ ] Dark mode
+- [ ] 2FA untuk admin
 
 See the [open issues](https://github.com/Andrian206/Sistem-Pengaduan/issues) for a full list of proposed features.
 
@@ -540,10 +585,20 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more informa
 
 ---
 
+## 📚 Additional Documentation
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Arsitektur production-ready lengkap |
+| [SISTEM.md](SISTEM.md) | Dokumentasi sistem backend |
+| [CREATE_USERS.md](CREATE_USERS.md) | Panduan membuat akun testing |
+
+---
+
 <div align="center">
 
 **⭐ Star this repository if you find it helpful!**
 
-Made by Andrian
+Made with ❤️ by Andrian
 
 </div>
