@@ -258,7 +258,7 @@ export default function LandingPage() {
             </span>
           </div>
           <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-            Copyright © 2024 SapaIKMP - Kelola Aspirasi Warga.
+            Copyright © 2026 SapaIKMP - Kelola Aspirasi Warga.
           </p>
           <div className="flex gap-6">
             <a

@@ -4,7 +4,7 @@ import { useState, useEffect, ChangeEvent, useCallback } from "react";
 import { supabase, type Ticket } from "@/utils/supabase";
 import { useAuthSecure } from "@/hooks/useAuthSecure";
 import { useToast } from "@/hooks/useToast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -23,7 +23,7 @@ export default function UserDashboard() {
   const toast = useToast();
   
   // Menggunakan useAuth hook - semua logic auth ditangani di sini
-  const { user, isLoading: isCheckingAuth, logout } = useAuthSecure({
+  const { user, token, isLoading: isCheckingAuth, logout } = useAuthSecure({
     requireAuth: true,           // Redirect ke login jika tidak authenticated
     redirectAdminToPanel: true,  // Admin/RT/Ketua RT redirect ke /admin
   });
@@ -65,7 +65,7 @@ export default function UserDashboard() {
 
   // 2. Logic Kirim Laporan
   async function submitTicket() {
-    if (!user) {
+    if (!user || !token) {
       toast.error("Session tidak valid. Silakan login kembali.");
       return;
     }
@@ -96,15 +96,21 @@ export default function UserDashboard() {
         imageUrl = publicUrlData.publicUrl;
       }
 
-      const { error } = await supabase.from("tickets").insert({
-        title: title,
-        description: desc,
-        user_id: user.id,
-        status: "PENDING",
-        image_url: imageUrl
+      // Menggunakan RPC function create_ticket (lebih aman, melalui RLS)
+      const { data, error } = await supabase.rpc('create_ticket', {
+        p_token: token,
+        p_title: title,
+        p_description: desc,
+        p_image_url: imageUrl
       });
 
       if (error) throw error;
+      
+      // Check response dari function
+      const result = data as { success: boolean; error?: string; ticket_id?: string };
+      if (!result.success) {
+        throw new Error(result.error || 'Gagal membuat laporan');
+      }
 
       // Refresh tickets tanpa reload halaman
       const { data: newTickets } = await supabase
@@ -233,6 +239,9 @@ export default function UserDashboard() {
                     <span className="material-symbols-outlined text-primary">edit_square</span>
                     Buat Laporan
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                    Form untuk membuat laporan pengaduan baru
+                </DialogDescription>
             </DialogHeader>
             
             {/* Content Scrollable */}
